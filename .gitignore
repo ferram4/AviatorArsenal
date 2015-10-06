@@ -1,0 +1,6 @@
+/AviatorArsenal/bin/Debug/*
+/AviatorArsenal/bin/Release/*
+/AviatorArsenal/obj/Debug/*
+/AviatorArsenal/obj/Release/*
+
+*.suo
