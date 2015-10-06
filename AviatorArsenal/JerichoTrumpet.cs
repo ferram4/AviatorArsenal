@@ -32,19 +32,26 @@ namespace AviatorArsenal
         #region Init Methods
         void InitAudio()
         {
-            trumpetClip = GameDatabase.Instance.GetAudioClip(audioClipName);
+            if (audioClipName != String.Empty)
+            {
+                trumpetClip = GameDatabase.Instance.GetAudioClip(audioClipName);
 
-            trumpetSource = gameObject.AddComponent<AudioSource>();
-            trumpetSource.dopplerLevel = 1;
-            trumpetSource.priority = 5;
-            trumpetSource.bypassListenerEffects = true;
-            trumpetSource.minDistance = 0.1f;
-            trumpetSource.maxDistance = 2000;
-            trumpetSource.volume = 0;
-            trumpetSource.loop = true;
+                trumpetSource = gameObject.AddComponent<AudioSource>();
+                trumpetSource.dopplerLevel = 1;
+                trumpetSource.priority = 5;
+                trumpetSource.bypassListenerEffects = true;
+                trumpetSource.minDistance = 0.1f;
+                trumpetSource.maxDistance = 2000;
+                trumpetSource.volume = 0;
+                trumpetSource.loop = true;
 
-            trumpetSource.clip = trumpetClip;
-
+                trumpetSource.clip = trumpetClip;
+            }
+            else
+            {
+                this.enabled = false;
+                Debug.LogError("AviatorArsenal JerichoTrumpet module does not have a sound specified");
+            }
         }
         #endregion
 
