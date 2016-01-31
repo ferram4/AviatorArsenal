@@ -11,8 +11,8 @@ namespace AviatorArsenal
     public class JerichoTrumpet : PartModule
     {
         //cutoff velocity in m/s
-        [KSPField(isPersistant = false, guiActive = false)]
-        public float cutoffVelocity = 110;
+        [KSPField(guiName = "Velocity", isPersistant = true, guiActiveEditor = false, guiActive = false), UI_FloatRange(affectSymCounterparts = UI_Scene.All, maxValue = 300.0f, minValue = 50f, scene = UI_Scene.All, stepIncrement = 5f)]
+        public float cutoffVelocity = 130;
 
         [KSPField(isPersistant = false, guiActive = false)]
         public float meshSwitchRPM = 300;
@@ -28,7 +28,7 @@ namespace AviatorArsenal
 
         //controls rate of change of RPM as a function of dyn pres
         [KSPField(isPersistant = false, guiActive = false)]
-        public float dynPresScalingFactor = 0.0001f;
+        public float dynPresScalingFactor = 10;
 
         [KSPField(isPersistant = false, guiActive = false)]
         public float frictionDecayFactor = 0.01f;
@@ -59,6 +59,7 @@ namespace AviatorArsenal
         AudioClip trumpetClip;
 
         float RPMPerVelocity;
+        [KSPField(isPersistant = false, guiActive = true)]
         float currentRPM;
         bool propDiskVisible = false;
 
@@ -104,6 +105,13 @@ namespace AviatorArsenal
             {
                 this.enabled = false;
                 Debug.LogError("AviatorArsenal JerichoTrumpet module does not have a prop axis transform specified");
+            }
+
+            if (cutoffRPM >= maxRPM)
+            {
+                cutoffRPM = 1000;
+                maxRPM = 2000;
+                Debug.LogError("AviatorArsenal JerichoTrumpet module config cutoffRPM is higher or equal to maxRPM");
             }
 
             propellerDiskTransform.gameObject.SetActive(false);
@@ -174,13 +182,18 @@ namespace AviatorArsenal
 
             currentRPM += TimeWarp.fixedDeltaTime * tmp1;
         }
-        
+
         void FixedUpdateVelocityClamp()
         {
             if (currentRPM > maxRPM)
                 currentRPM = maxRPM;
             if (currentRPM < -maxRPM)
                 currentRPM = -maxRPM;
+
+            if (currentRPM < 1 )
+            {
+                currentRPM = 0;
+            }
         }
 
         #endregion
@@ -201,10 +214,15 @@ namespace AviatorArsenal
             {
                 if (trumpetSource.isPlaying)
                 {
-                    trumpetSource.volume = 0;
-                    trumpetSource.Stop();
+                    PauseSound();
                 }
             }
+        }
+
+        void PauseSound()
+        {
+            trumpetSource.volume = 0;
+            trumpetSource.Stop();
         }
 
         float CalculateVolume()
@@ -213,7 +231,7 @@ namespace AviatorArsenal
 
             rpmFactor = currentRPM - cutoffRPM;
 
-            rpmFactor *= 0.001f;
+            rpmFactor *= 1/(maxRPM - cutoffRPM); //Guarantees that volume will be 1 at max RPM
 
             if (rpmFactor <= 0)
                 return 0;
@@ -274,16 +292,21 @@ namespace AviatorArsenal
 
         void Update()
         {
-            if (HighLogic.LoadedSceneIsFlight && ready)
+            if (HighLogic.LoadedSceneIsFlight && ready && !PauseMenu.isOpen)
             {
                 UpdateAnimation();
                 UpdateSound();
+            }
+
+            if (PauseMenu.isOpen && trumpetSource.isPlaying)
+            {
+                PauseSound();
             }
         }
 
         void FixedUpdate()
         {
-            if(HighLogic.LoadedSceneIsFlight && ready)
+            if(HighLogic.LoadedSceneIsFlight && ready && !PauseMenu.isOpen)
             {
                 FixedUpdateFrictionRPM();
                 FixedUpdateVelocityRPM();
